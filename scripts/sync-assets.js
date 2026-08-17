@@ -30,6 +30,10 @@ const STATIC_CSV = [
   'db/people.csv',
   'db/objects.csv',
   'db/periods.csv',
+  'db/caesars.csv',
+  'db/terah-lines.csv',
+  'db/terah-family.csv',
+  'db/terah-footnotes.csv',
   'db/pictures.csv',
   'db/pictures_svg.csv'
 ];
@@ -38,7 +42,8 @@ const STATIC_FONTS = [
   'python/fonts/aptos.ttf',
   'python/fonts/aptos-bold.ttf',
   'python/fonts/NotoSans.ttf',
-  'python/fonts/NotoSans-bold.ttf'
+  'python/fonts/NotoSans-bold.ttf',
+  'python/fonts/NotoCuneiform.ttf'
 ];
 
 const FIXED_IMAGES = [
