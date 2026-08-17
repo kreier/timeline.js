@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>timeline.js — 6150 years, rendered in your browser</title>
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+  <header class="ledger-head">
+    <div class="ruler" aria-hidden="true">
+      <div class="ruler-track" id="rulerTrack"></div>
+    </div>
+    <h1><span class="ink">timeline</span><span class="dot">.js</span></h1>
+    <p class="subtitle">4075 BCE &rarr; 2075 CE, drawn live in your browser from the same CSVs, fonts and images as
+      <a href="https://github.com/kreier/timeline" target="_blank" rel="noopener">kreier/timeline</a>.</p>
+  </header>
+
+  <main class="deck">
+
+    <section class="card" id="step-assets">
+      <div class="card-num">01</div>
+      <div class="card-body">
+        <h2>Download assets</h2>
+        <p>Fetch the dictionary, color, and layout CSVs, the fonts, and the images directly from the
+          <code>kreier/timeline</code> repository on GitHub. Nothing is uploaded &mdash; everything stays in your browser's memory.</p>
+        <label class="field">
+          <span>Language</span>
+          <select id="languageSelect">
+            <option value="en">English</option>
+            <option value="de">German (Deutsch)</option>
+            <option value="vi">Vietnamese (Ti&#7871;ng Vi&#7879;t)</option>
+            <option value="fr">French (Fran&ccedil;ais)</option>
+            <option value="it">Italian (Italiano)</option>
+            <option value="tl">Filipino (Tagalog)</option>
+          </select>
+        </label>
+        <button id="btnDownload" class="btn btn-primary">Download assets</button>
+        <div id="assetLog" class="log" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="card" id="step-select" aria-disabled="true">
+      <div class="card-num">02</div>
+      <div class="card-body">
+        <h2>Choose what to draw</h2>
+        <p>Every layer below maps to one function in the original <code>6000.py</code>. Turn layers off to speed up
+          iteration, or to build a partial/custom timeline.</p>
+        <ul id="stepList" class="step-list"></ul>
+      </div>
+    </section>
+
+    <section class="card" id="step-render" aria-disabled="true">
+      <div class="card-num">03</div>
+      <div class="card-body">
+        <h2>Create PDF</h2>
+        <label class="field">
+          <span>Edition</span>
+          <select id="editionSelect">
+            <option value="digital">Digital (10mm side border)</option>
+            <option value="print">Print (60mm side border for scroll rollers)</option>
+          </select>
+        </label>
+        <button id="btnRender" class="btn btn-primary">Create PDF</button>
+        <button id="btnUpdate" class="btn btn-ghost">Update preview</button>
+        <div id="renderLog" class="log" aria-live="polite"></div>
+        <a id="downloadLink" class="btn btn-download" style="display:none" download>Download timeline.pdf</a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="ledger-foot">
+    <p>Apache-2.0 &middot; data and images &copy; <a href="https://github.com/kreier/timeline">kreier/timeline</a> &middot;
+      generator source: <a href="https://github.com/kreier/timeline.js">kreier/timeline.js</a></p>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
