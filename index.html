@@ -8,25 +8,43 @@
 </head>
 <body>
   <header class="ledger-head">
-    <div class="ruler" aria-hidden="true">
-      <div class="ruler-track" id="rulerTrack"></div>
+    <div class="header-inner">
+      <div class="header-brand">
+        <h1><span class="ink">timeline</span><span class="dot">.js</span></h1>
+        <div class="header-badges">
+          <span class="meta-badge badge-license" title="License: Apache-2.0">Apache-2.0</span>
+          <span class="meta-badge badge-version" id="versionBadge" title="Version">v0.1.0</span>
+          <span class="meta-badge badge-upstream" id="upstreamBadge" title="Upstream status">
+            <span class="dot-indicator"></span>
+            <span id="upstreamText">Upstream: checking...</span>
+          </span>
+          <button type="button" id="btnCheckUpstream" class="btn-upstream-check" title="Check for latest changes in kreier/timeline">
+            <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+              <path fill-rule="evenodd" d="M8 3a5 5 0 104.546 2.914.5.5 0 01.908-.417A6 6 0 118 2v1z" clip-rule="evenodd"/>
+              <path d="M8 4.466V.534a.25.25 0 01.41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 018 4.466z"/>
+            </svg>
+            Sync Check
+          </button>
+        </div>
+      </div>
+      <p class="subtitle">4075 BCE &rarr; 2075 CE &middot; Rendered live in your browser using data from
+        <a href="https://github.com/kreier/timeline" target="_blank" rel="noopener">kreier/timeline</a>.
+      </p>
     </div>
-    <h1><span class="ink">timeline</span><span class="dot">.js</span></h1>
-    <p class="subtitle">4075 BCE &rarr; 2075 CE, drawn live in your browser from the same CSVs, fonts and images as
-      <a href="https://github.com/kreier/timeline" target="_blank" rel="noopener">kreier/timeline</a>.</p>
   </header>
 
   <main class="deck">
 
-    <section class="card" id="step-assets">
-      <div class="card-num">01</div>
-      <div class="card-body">
-        <h2>Download assets</h2>
-        <p>Fetch the dictionary, color, and layout CSVs, the fonts, and the images directly from the
-          <code>kreier/timeline</code> repository on GitHub. Nothing is uploaded &mdash; everything stays in your browser's memory.</p>
-        <label class="field">
-          <span>Language</span>
-          <select id="languageSelect">
+    <!-- Top Action Row: 3 Primary Actions -->
+    <section class="action-bar-card" aria-label="Timeline Actions">
+      <div class="action-col">
+        <div class="action-header">
+          <span class="action-step">1</span>
+          <h3>Download Assets</h3>
+        </div>
+        <div class="action-controls">
+          <label class="control-label" for="languageSelect">Language</label>
+          <select id="languageSelect" class="form-select">
             <option value="en">English</option>
             <option value="de">German (Deutsch)</option>
             <option value="vi">Vietnamese (Ti&#7871;ng Vi&#7879;t)</option>
@@ -34,45 +52,168 @@
             <option value="it">Italian (Italiano)</option>
             <option value="tl">Filipino (Tagalog)</option>
           </select>
-        </label>
-        <button id="btnDownload" class="btn btn-primary">Download assets</button>
-        <div id="assetLog" class="log" aria-live="polite"></div>
+          <button id="btnDownload" class="btn btn-primary">
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            Download assets
+          </button>
+        </div>
       </div>
-    </section>
 
-    <section class="card" id="step-select" aria-disabled="true">
-      <div class="card-num">02</div>
-      <div class="card-body">
-        <h2>Choose what to draw</h2>
-        <p>Every layer below maps to one function in the original <code>6000.py</code>. Turn layers off to speed up
-          iteration, or to build a partial/custom timeline.</p>
-        <ul id="stepList" class="step-list"></ul>
-      </div>
-    </section>
+      <div class="action-divider" aria-hidden="true"></div>
 
-    <section class="card" id="step-render" aria-disabled="true">
-      <div class="card-num">03</div>
-      <div class="card-body">
-        <h2>Create PDF</h2>
-        <label class="field">
-          <span>Edition</span>
-          <select id="editionSelect">
-            <option value="digital">Digital (10mm side border)</option>
-            <option value="print">Print (60mm side border for scroll rollers)</option>
+      <div class="action-col">
+        <div class="action-header">
+          <span class="action-step">2</span>
+          <h3>Create PDF</h3>
+        </div>
+        <div class="action-controls">
+          <label class="control-label" for="editionSelect">Edition</label>
+          <select id="editionSelect" class="form-select">
+            <option value="digital">Digital (10mm border)</option>
+            <option value="print">Print (60mm border)</option>
           </select>
-        </label>
-        <button id="btnRender" class="btn btn-primary">Create PDF</button>
-        <button id="btnUpdate" class="btn btn-ghost">Update preview</button>
-        <div id="renderLog" class="log" aria-live="polite"></div>
-        <a id="downloadLink" class="btn btn-download" style="display:none" download>Download timeline.pdf</a>
+          <div class="btn-group">
+            <button id="btnRender" class="btn btn-primary" disabled>
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+              </svg>
+              Create PDF
+            </button>
+            <button id="btnUpdate" class="btn btn-ghost" disabled title="Update preview">Preview</button>
+          </div>
+          <a id="downloadLink" class="btn btn-download" style="display:none" download>
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            Save PDF
+          </a>
+        </div>
       </div>
+
+      <div class="action-divider" aria-hidden="true"></div>
+
+      <div class="action-col">
+        <div class="action-header">
+          <span class="action-step">3</span>
+          <h3>Edit Source</h3>
+        </div>
+        <div class="action-controls action-source-col">
+          <span class="source-desc">Explore or modify the original repository data & scripts.</span>
+          <a id="btnEditSource" class="btn btn-outline" href="https://github.com/kreier/timeline" target="_blank" rel="noopener">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            Edit source
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Asset Groups Section: 4 Groups in a Single Row -->
+    <section class="card" id="step-assets-status">
+      <div class="card-header-flex">
+        <div>
+          <h2>Loaded Assets</h2>
+          <p class="section-desc">Bundled for instant load, with live sync to GitHub. Files are organized into four categories.</p>
+        </div>
+        <div id="overallAssetStatus" class="status-indicator">Ready to download</div>
+      </div>
+
+      <div class="asset-grid">
+
+        <!-- Group 1: Dictionaries -->
+        <div class="asset-group-card" id="group-dictionaries">
+          <div class="asset-group-header">
+            <div class="group-title-wrap">
+              <span class="group-icon">📖</span>
+              <span class="group-name">Dictionaries</span>
+            </div>
+            <span class="counter-badge" id="badge-dictionaries">0/2</span>
+          </div>
+          <details class="asset-details" id="details-dictionaries">
+            <summary class="details-toggle">View files</summary>
+            <ul class="file-list" id="list-dictionaries"></ul>
+          </details>
+        </div>
+
+        <!-- Group 2: Data CSVs -->
+        <div class="asset-group-card" id="group-data">
+          <div class="asset-group-header">
+            <div class="group-title-wrap">
+              <span class="group-icon">📊</span>
+              <span class="group-name">Data CSVs</span>
+            </div>
+            <span class="counter-badge" id="badge-data">0/14</span>
+          </div>
+          <details class="asset-details" id="details-data">
+            <summary class="details-toggle">View files</summary>
+            <ul class="file-list" id="list-data"></ul>
+          </details>
+        </div>
+
+        <!-- Group 3: Fonts -->
+        <div class="asset-group-card" id="group-fonts">
+          <div class="asset-group-header">
+            <div class="group-title-wrap">
+              <span class="group-icon">🔤</span>
+              <span class="group-name">Fonts</span>
+            </div>
+            <span class="counter-badge" id="badge-fonts">0/4</span>
+          </div>
+          <details class="asset-details" id="details-fonts">
+            <summary class="details-toggle">View files</summary>
+            <ul class="file-list" id="list-fonts"></ul>
+          </details>
+        </div>
+
+        <!-- Group 4: Images -->
+        <div class="asset-group-card" id="group-images">
+          <div class="asset-group-header">
+            <div class="group-title-wrap">
+              <span class="group-icon">🖼️</span>
+              <span class="group-name">Images</span>
+            </div>
+            <span class="counter-badge" id="badge-images">0/3</span>
+          </div>
+          <details class="asset-details" id="details-images">
+            <summary class="details-toggle">View files</summary>
+            <ul class="file-list" id="list-images"></ul>
+          </details>
+        </div>
+
+      </div>
+
+      <!-- Expandable Live Log -->
+      <details class="log-accordion" id="logAccordion">
+        <summary class="log-toggle">Activity &amp; Diagnostics Log (<span id="logCount">0 entries</span>)</summary>
+        <div id="assetLog" class="log" aria-live="polite"></div>
+        <div id="renderLog" class="log" aria-live="polite"></div>
+      </details>
+    </section>
+
+    <!-- Layer Selection Section: Choose what to draw -->
+    <section class="card" id="step-select" aria-disabled="true">
+      <div class="card-header-flex">
+        <div>
+          <h2>Choose what to draw</h2>
+          <p class="section-desc">Every layer below maps to one rendering function in the original Python timeline generator. Turn layers on/off to customize or speed up rendering.</p>
+        </div>
+        <div class="step-toggle-actions">
+          <button type="button" id="btnSelectAll" class="btn-link">Select All</button>
+          <span class="sep">&middot;</span>
+          <button type="button" id="btnDeselectAll" class="btn-link">Deselect All</button>
+        </div>
+      </div>
+      <ul id="stepList" class="step-list"></ul>
     </section>
 
   </main>
 
   <footer class="ledger-foot">
-    <p>Apache-2.0 &middot; data and images &copy; <a href="https://github.com/kreier/timeline">kreier/timeline</a> &middot;
-      generator source: <a href="https://github.com/kreier/timeline.js">kreier/timeline.js</a></p>
+    <p>Apache-2.0 &middot; data and images &copy; <a href="https://github.com/kreier/timeline" target="_blank" rel="noopener">kreier/timeline</a> &middot;
+      generator source: <a href="https://github.com/kreier/timeline.js" target="_blank" rel="noopener">kreier/timeline.js</a></p>
   </footer>
 
   <script type="module" src="/src/main.js"></script>

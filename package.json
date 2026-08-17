@@ -4,7 +4,10 @@
   "description": "Browser-based generator for the kreier/timeline PDF (human history timeline), using the original project's CSV data, fonts and images.",
   "type": "module",
   "scripts": {
+    "sync-assets": "node scripts/sync-assets.js",
+    "predev": "node scripts/sync-assets.js",
     "dev": "vite",
+    "prebuild": "node scripts/sync-assets.js",
     "build": "vite build",
     "preview": "vite preview"
   },
