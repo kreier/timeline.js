@@ -1,15 +1,14 @@
-// Downloads the same source files 6000.py reads from ../db, ../fonts and
-// ../images, straight from the kreier/timeline repo's raw content. Everything
-// lands in an in-memory store keyed by the path it has in the original repo
-// (e.g. "db/colors_rgb.csv", "fonts/aptos.ttf", "images/qr-en.png"), so the
-// PDF-generation code can stay ignorant of where bytes came from.
+// Downloads source files for timeline.js directly from kreier/timeline repo raw content.
+// Everything lands in an in-memory store keyed by relative path (e.g. "db/colors_rgb.csv",
+// "fonts/aptos.ttf", "images/qr-en.png").
 
 const RAW_BASE = 'https://raw.githubusercontent.com/kreier/timeline/main';
 
-// Static files needed regardless of language, mirrors the fixed imports at
-// the top of 6000.py / create_canvas() / include_pictures*().
-const STATIC_CSV = [
-  'db/dictionary_reference.csv',
+export const STATIC_DICTIONARIES = [
+  'db/dictionary_reference.csv'
+];
+
+export const STATIC_DATA_CSV = [
   'db/colors_rgb.csv',
   'db/supported_languages.csv',
   'db/adam-moses.csv',
@@ -26,40 +25,65 @@ const STATIC_CSV = [
   'db/pictures_svg.csv'
 ];
 
-const STATIC_FONTS = [
+export const STATIC_FONTS = [
   'python/fonts/aptos.ttf',
   'python/fonts/aptos-bold.ttf',
   'python/fonts/NotoSans.ttf',
   'python/fonts/NotoSans-bold.ttf'
-  // NotoCuneiform.ttf and per-language script fonts are pulled in on demand,
-  // see fontsForLanguage() below - mirrors the "glyphs" branch in
-  // create_canvas() in 6000.py which only loads a script font when the
-  // language's row in supported_languages.csv asks for one.
 ];
 
-async function fetchText(path, log) {
-  const url = `${RAW_BASE}/${path}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`${path} -> HTTP ${res.status}`);
-  log?.(`ok: ${path}`, 'ok');
-  return res.text();
+export const FIXED_IMAGES = (langCode) => [
+  `images/qr-${langCode}.png`,
+  'images/daniel2_fiverr2.svg',
+  'images/daniel2_fiverr2_rtl.svg'
+];
+
+export function getExpectedAssets(langCode) {
+  return {
+    dictionaries: [
+      ...STATIC_DICTIONARIES,
+      `db/dictionary_${langCode}.csv`
+    ],
+    data: [...STATIC_DATA_CSV],
+    fonts: [...STATIC_FONTS],
+    images: [...FIXED_IMAGES(langCode)]
+  };
 }
 
-async function fetchBinary(path, log) {
+async function fetchText(path, log, onFileProgress) {
+  onFileProgress?.({ path, status: 'loading' });
   const url = `${RAW_BASE}/${path}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`${path} -> HTTP ${res.status}`);
+  if (!res.ok) {
+    onFileProgress?.({ path, status: 'err', error: `HTTP ${res.status}` });
+    throw new Error(`${path} -> HTTP ${res.status}`);
+  }
+  const text = await res.text();
   log?.(`ok: ${path}`, 'ok');
-  return res.arrayBuffer();
+  onFileProgress?.({ path, status: 'ok', size: text.length });
+  return text;
+}
+
+async function fetchBinary(path, log, onFileProgress) {
+  onFileProgress?.({ path, status: 'loading' });
+  const url = `${RAW_BASE}/${path}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    onFileProgress?.({ path, status: 'err', error: `HTTP ${res.status}` });
+    throw new Error(`${path} -> HTTP ${res.status}`);
+  }
+  const buffer = await res.arrayBuffer();
+  log?.(`ok: ${path}`, 'ok');
+  onFileProgress?.({ path, status: 'ok', size: buffer.byteLength });
+  return buffer;
 }
 
 /**
  * Reads supported_languages.csv (already downloaded) to find the extra
- * script font this language needs, matching the branch in create_canvas():
- *   if df.at[row_index[0], 'fontname'] == " ": use Aptos
- *   else: load fonts/<fontname>.ttf (+ "-bold" if it exists)
+ * script font this language needs.
  */
 function fontsForLanguage(supportedLanguagesCsvText, langCode, Papa) {
+  if (!supportedLanguagesCsvText) return [];
   const rows = Papa.parse(supportedLanguagesCsvText, { header: true }).data;
   const row = rows.find((r) => r.key === langCode);
   const fontname = row?.fontname?.trim();
@@ -68,58 +92,79 @@ function fontsForLanguage(supportedLanguagesCsvText, langCode, Papa) {
 }
 
 /**
- * Downloads dictionary/colors/layout CSVs, core fonts, the QR + Daniel-2
- * images, and (after parsing pictures.csv/pictures_svg.csv) every image
- * referenced there - the same set 6000.py touches for one language.
+ * Downloads dictionary/colors/layout CSVs, core fonts, QR + Daniel-2
+ * images, and all images referenced in pictures.csv / pictures_svg.csv.
  *
- * @param {string} langCode  e.g. "en", "de", "vi"
+ * @param {string} langCode
  * @param {(msg:string, kind?:'ok'|'err')=>void} log
- * @returns {Promise<{files: Map<string, string|ArrayBuffer>, langCode:string}>}
+ * @param {object} Papa
+ * @param {(info: {category: string, path: string, status: string, size?: number, error?: string}) => void} onProgress
+ * @returns {Promise<{files: Map<string, string|ArrayBuffer>, langCode: string}>}
  */
-export async function downloadAssets(langCode, log, Papa) {
+export async function downloadAssets(langCode, log, Papa, onProgress) {
   const files = new Map();
 
-  const csvPaths = [...STATIC_CSV, `db/dictionary_${langCode}.csv`];
-  for (const p of csvPaths) {
-    files.set(p, await fetchText(p, log));
-  }
-
-  const langFonts = fontsForLanguage(files.get('db/supported_languages.csv'), langCode, Papa);
-  for (const p of [...STATIC_FONTS, ...langFonts]) {
+  // 1. Dictionaries
+  const dictPaths = [...STATIC_DICTIONARIES, `db/dictionary_${langCode}.csv`];
+  for (const p of dictPaths) {
     try {
-      files.set(p, await fetchBinary(p, log));
+      const content = await fetchText(p, log, (info) => onProgress?.({ category: 'dictionaries', ...info }));
+      files.set(p, content);
     } catch (e) {
-      // Bold variants for a script font sometimes don't exist (6000.py falls
-      // back to the regular weight in that case) - don't hard-fail the batch.
-      log?.(`skip: ${p} (${e.message})`, 'err');
+      log?.(`err: ${p} (${e.message})`, 'err');
     }
   }
 
-  // QR + Daniel 2 images (create_qr_code / create_daniel2 in 6000.py)
-  const fixedImages = [
-    `images/qr-${langCode}.png`,
-    'images/daniel2_fiverr2.svg',
-    'images/daniel2_fiverr2_rtl.svg'
-  ];
+  // 2. Data CSVs
+  for (const p of STATIC_DATA_CSV) {
+    try {
+      const content = await fetchText(p, log, (info) => onProgress?.({ category: 'data', ...info }));
+      files.set(p, content);
+    } catch (e) {
+      log?.(`err: ${p} (${e.message})`, 'err');
+    }
+  }
+
+  // 3. Fonts
+  const langFonts = fontsForLanguage(files.get('db/supported_languages.csv'), langCode, Papa);
+  const allFonts = [...STATIC_FONTS, ...langFonts];
+  for (const p of allFonts) {
+    try {
+      const buffer = await fetchBinary(p, log, (info) => onProgress?.({ category: 'fonts', ...info }));
+      files.set(p, buffer);
+    } catch (e) {
+      log?.(`skip: ${p} (${e.message})`, 'err');
+      onProgress?.({ category: 'fonts', path: p, status: 'skip', error: e.message });
+    }
+  }
+
+  // 4. Fixed Images
+  const fixedImages = FIXED_IMAGES(langCode);
   for (const p of fixedImages) {
     try {
-      files.set(p, await fetchBinary(p, log));
+      const buffer = await fetchBinary(p, log, (info) => onProgress?.({ category: 'images', ...info }));
+      files.set(p, buffer);
     } catch (e) {
       log?.(`skip: ${p} (${e.message})`, 'err');
+      onProgress?.({ category: 'images', path: p, status: 'skip', error: e.message });
     }
   }
 
-  // Images enumerated in pictures.csv / pictures_svg.csv (include_pictures*)
+  // 5. Dynamic Images from pictures.csv / pictures_svg.csv
   for (const csvKey of ['db/pictures.csv', 'db/pictures_svg.csv']) {
-    const rows = Papa.parse(files.get(csvKey), { header: true }).data;
+    const csvContent = files.get(csvKey);
+    if (!csvContent) continue;
+    const rows = Papa.parse(csvContent, { header: true }).data;
     for (const row of rows) {
       if (!row.key) continue;
       const path = csvKey.endsWith('svg.csv') ? `images/${row.key}.svg` : `images/${row.key}`;
       if (files.has(path)) continue;
       try {
-        files.set(path, await fetchBinary(path, log));
+        const buffer = await fetchBinary(path, log, (info) => onProgress?.({ category: 'images', ...info }));
+        files.set(path, buffer);
       } catch (e) {
         log?.(`skip: ${path} (${e.message})`, 'err');
+        onProgress?.({ category: 'images', path: p, status: 'skip', error: e.message });
       }
     }
   }
