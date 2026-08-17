@@ -1,5 +1,9 @@
 # timeline.js
 
+![GitHub License](https://img.shields.io/github/license/kreier/timeline.js)
+![GitHub Release](https://img.shields.io/github/v/release/kreier/timeline.js)
+[![Deploy to GitHub Pages](https://github.com/kreier/timeline.js/actions/workflows/deploy.yml/badge.svg)](https://github.com/kreier/timeline.js/actions/workflows/deploy.yml)
+
 Browser-based generator for the [kreier/timeline](https://github.com/kreier/timeline) PDF
 (an overview of human history, 4075 BCE &ndash; 2075 CE). Downloads the same CSVs, fonts,
 and images the Python `python/6000.py` script uses, and draws the PDF client-side with
