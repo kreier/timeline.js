@@ -1,8 +1,10 @@
-// Downloads source files for timeline.js directly from kreier/timeline repo raw content.
-// Everything lands in an in-memory store keyed by relative path (e.g. "db/colors_rgb.csv",
-// "fonts/aptos.ttf", "images/qr-en.png").
+// Downloads source files for timeline.js.
+// Prioritizes local bundled assets in public/ / dist/, falling back to
+// kreier/timeline raw content from GitHub.
 
 const RAW_BASE = 'https://raw.githubusercontent.com/kreier/timeline/main';
+const BASE = import.meta.env.BASE_URL || '/';
+const LOCAL_BASE = BASE.endsWith('/') ? BASE : `${BASE}/`;
 
 export const STATIC_DICTIONARIES = [
   'db/dictionary_reference.csv'
@@ -21,6 +23,10 @@ export const STATIC_DATA_CSV = [
   'db/people.csv',
   'db/objects.csv',
   'db/periods.csv',
+  'db/caesars.csv',
+  'db/terah-lines.csv',
+  'db/terah-family.csv',
+  'db/terah-footnotes.csv',
   'db/pictures.csv',
   'db/pictures_svg.csv'
 ];
@@ -29,7 +35,8 @@ export const STATIC_FONTS = [
   'python/fonts/aptos.ttf',
   'python/fonts/aptos-bold.ttf',
   'python/fonts/NotoSans.ttf',
-  'python/fonts/NotoSans-bold.ttf'
+  'python/fonts/NotoSans-bold.ttf',
+  'python/fonts/NotoCuneiform.ttf'
 ];
 
 export const FIXED_IMAGES = (langCode) => [
@@ -52,6 +59,22 @@ export function getExpectedAssets(langCode) {
 
 async function fetchText(path, log, onFileProgress) {
   onFileProgress?.({ path, status: 'loading' });
+
+  // 1. Try local bundled asset first (fast same-origin fetch)
+  try {
+    const localUrl = `${LOCAL_BASE}${path}`;
+    const localRes = await fetch(localUrl);
+    if (localRes.ok) {
+      const text = await localRes.text();
+      log?.(`ok: ${path} (bundled)`, 'ok');
+      onFileProgress?.({ path, status: 'ok', size: text.length });
+      return text;
+    }
+  } catch (e) {
+    // Proceed to fallback
+  }
+
+  // 2. Fallback to raw GitHub content
   const url = `${RAW_BASE}/${path}`;
   const res = await fetch(url);
   if (!res.ok) {
@@ -59,13 +82,29 @@ async function fetchText(path, log, onFileProgress) {
     throw new Error(`${path} -> HTTP ${res.status}`);
   }
   const text = await res.text();
-  log?.(`ok: ${path}`, 'ok');
+  log?.(`ok: ${path} (remote)`, 'ok');
   onFileProgress?.({ path, status: 'ok', size: text.length });
   return text;
 }
 
 async function fetchBinary(path, log, onFileProgress) {
   onFileProgress?.({ path, status: 'loading' });
+
+  // 1. Try local bundled asset first
+  try {
+    const localUrl = `${LOCAL_BASE}${path}`;
+    const localRes = await fetch(localUrl);
+    if (localRes.ok) {
+      const buffer = await localRes.arrayBuffer();
+      log?.(`ok: ${path} (bundled)`, 'ok');
+      onFileProgress?.({ path, status: 'ok', size: buffer.byteLength });
+      return buffer;
+    }
+  } catch (e) {
+    // Proceed to fallback
+  }
+
+  // 2. Fallback to raw GitHub content
   const url = `${RAW_BASE}/${path}`;
   const res = await fetch(url);
   if (!res.ok) {
@@ -73,7 +112,7 @@ async function fetchBinary(path, log, onFileProgress) {
     throw new Error(`${path} -> HTTP ${res.status}`);
   }
   const buffer = await res.arrayBuffer();
-  log?.(`ok: ${path}`, 'ok');
+  log?.(`ok: ${path} (remote)`, 'ok');
   onFileProgress?.({ path, status: 'ok', size: buffer.byteLength });
   return buffer;
 }
@@ -92,7 +131,7 @@ function fontsForLanguage(supportedLanguagesCsvText, langCode, Papa) {
 }
 
 /**
- * Downloads dictionary/colors/layout CSVs, core fonts, QR + Daniel-2
+ * Downloads/loads dictionary/colors/layout CSVs, core fonts, QR + Daniel-2
  * images, and all images referenced in pictures.csv / pictures_svg.csv.
  *
  * @param {string} langCode

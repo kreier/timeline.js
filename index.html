@@ -8,12 +8,29 @@
 </head>
 <body>
   <header class="ledger-head">
-    <div class="ruler" aria-hidden="true">
-      <div class="ruler-track" id="rulerTrack"></div>
+    <div class="header-inner">
+      <div class="header-brand">
+        <h1><span class="ink">timeline</span><span class="dot">.js</span></h1>
+        <div class="header-badges">
+          <span class="meta-badge badge-license" title="License: Apache-2.0">Apache-2.0</span>
+          <span class="meta-badge badge-version" id="versionBadge" title="Version">v0.1.0</span>
+          <span class="meta-badge badge-upstream" id="upstreamBadge" title="Upstream status">
+            <span class="dot-indicator"></span>
+            <span id="upstreamText">Upstream: checking...</span>
+          </span>
+          <button type="button" id="btnCheckUpstream" class="btn-upstream-check" title="Check for latest changes in kreier/timeline">
+            <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+              <path fill-rule="evenodd" d="M8 3a5 5 0 104.546 2.914.5.5 0 01.908-.417A6 6 0 118 2v1z" clip-rule="evenodd"/>
+              <path d="M8 4.466V.534a.25.25 0 01.41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 018 4.466z"/>
+            </svg>
+            Sync Check
+          </button>
+        </div>
+      </div>
+      <p class="subtitle">4075 BCE &rarr; 2075 CE &middot; Rendered live in your browser using data from
+        <a href="https://github.com/kreier/timeline" target="_blank" rel="noopener">kreier/timeline</a>.
+      </p>
     </div>
-    <h1><span class="ink">timeline</span><span class="dot">.js</span></h1>
-    <p class="subtitle">4075 BCE &rarr; 2075 CE, drawn live in your browser from the same CSVs, fonts and images as
-      <a href="https://github.com/kreier/timeline" target="_blank" rel="noopener">kreier/timeline</a>.</p>
   </header>
 
   <main class="deck">
@@ -65,13 +82,13 @@
               Create PDF
             </button>
             <button id="btnUpdate" class="btn btn-ghost" disabled title="Update preview">Preview</button>
+            <a id="downloadLink" class="btn btn-download" style="display:none" download>
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              Save PDF
+            </a>
           </div>
-          <a id="downloadLink" class="btn btn-download" style="display:none" download>
-            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
-              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-            Save PDF
-          </a>
         </div>
       </div>
 
@@ -94,12 +111,12 @@
       </div>
     </section>
 
-    <!-- Asset Groups Section with live progress and expandable file details -->
+    <!-- Asset Groups Section: 4 Groups in a Single Row -->
     <section class="card" id="step-assets-status">
       <div class="card-header-flex">
         <div>
           <h2>Loaded Assets</h2>
-          <p class="section-desc">Downloaded directly from GitHub into browser memory. Files are grouped by category.</p>
+          <p class="section-desc">Bundled for instant load, with live sync to GitHub. Files are organized into four categories.</p>
         </div>
         <div id="overallAssetStatus" class="status-indicator">Ready to download</div>
       </div>

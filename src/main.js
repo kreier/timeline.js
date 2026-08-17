@@ -12,10 +12,13 @@ const state = {
     fonts: { loaded: 0, total: 4 },
     images: { loaded: 0, total: 3 }
   },
-  logEntriesCount: 0
+  logEntriesCount: 0,
+  buildInfo: null
 };
 
 const $ = (sel) => document.querySelector(sel);
+const BASE = import.meta.env.BASE_URL || '/';
+const LOCAL_BASE = BASE.endsWith('/') ? BASE : `${BASE}/`;
 
 function log(container, msg, kind = '') {
   const line = document.createElement('div');
@@ -181,7 +184,7 @@ async function handleDownload() {
 
   const statusEl = $('#overallAssetStatus');
   if (statusEl) {
-    statusEl.textContent = 'Downloading assets...';
+    statusEl.textContent = 'Loading assets...';
     statusEl.className = 'status-indicator status-loading';
   }
 
@@ -195,7 +198,7 @@ async function handleDownload() {
     );
 
     state.files = files;
-    log(logEl, `Download complete: ${files.size} files loaded in memory.`, 'ok');
+    log(logEl, `Assets ready: ${files.size} files loaded in memory.`, 'ok');
 
     if (statusEl) {
       statusEl.textContent = `Ready (${files.size} files)`;
@@ -209,9 +212,9 @@ async function handleDownload() {
     if (btnRender) btnRender.disabled = false;
     if (btnUpdate) btnUpdate.disabled = false;
   } catch (e) {
-    log(logEl, `Download failed: ${e.message}`, 'err');
+    log(logEl, `Load failed: ${e.message}`, 'err');
     if (statusEl) {
-      statusEl.textContent = 'Download error';
+      statusEl.textContent = 'Load error';
       statusEl.className = 'status-indicator';
     }
   } finally {
@@ -260,7 +263,6 @@ async function handleRender() {
   }
 }
 
-// Select/Deselect all steps
 function handleToggleAllSteps(checked) {
   for (const step of STEPS) {
     if (step.status === 'done') {
@@ -270,9 +272,77 @@ function handleToggleAllSteps(checked) {
   }
 }
 
+/**
+ * Loads build-info.json and checks for upstream changes against GitHub API.
+ */
+async function loadBuildInfo() {
+  const upstreamBadge = $('#upstreamBadge');
+  const upstreamText = $('#upstreamText');
+  const versionBadge = $('#versionBadge');
+
+  try {
+    const res = await fetch(`${LOCAL_BASE}build-info.json`);
+    if (res.ok) {
+      const info = await res.json();
+      state.buildInfo = info;
+      if (versionBadge && info.version) {
+        versionBadge.textContent = `v${info.version}`;
+      }
+      if (upstreamText && info.upstream?.shortSha) {
+        upstreamText.textContent = `Upstream: ${info.upstream.shortSha}`;
+        upstreamBadge?.classList.add('up-to-date');
+      }
+    } else {
+      if (upstreamText) upstreamText.textContent = 'Upstream: kreier/timeline';
+    }
+  } catch (e) {
+    if (upstreamText) upstreamText.textContent = 'Upstream: kreier/timeline';
+  }
+}
+
+async function checkUpstreamUpdates() {
+  const btn = $('#btnCheckUpstream');
+  const upstreamBadge = $('#upstreamBadge');
+  const upstreamText = $('#upstreamText');
+
+  if (btn) btn.classList.add('loading');
+  if (upstreamText) upstreamText.textContent = 'Checking upstream...';
+
+  try {
+    const res = await fetch('https://api.github.com/repos/kreier/timeline/commits/main');
+    if (!res.ok) throw new Error(`GitHub API HTTP ${res.status}`);
+    const latestCommit = await res.json();
+    const latestSha = latestCommit.sha;
+    const latestShortSha = latestSha.substring(0, 7);
+
+    const currentSha = state.buildInfo?.upstream?.sha;
+
+    if (currentSha && currentSha === latestSha) {
+      if (upstreamText) upstreamText.textContent = `Upstream: In sync (${latestShortSha})`;
+      upstreamBadge?.classList.remove('update-available');
+      upstreamBadge?.classList.add('up-to-date');
+    } else if (currentSha && currentSha !== latestSha) {
+      if (upstreamText) upstreamText.textContent = `Update available: ${latestShortSha}`;
+      upstreamBadge?.classList.remove('up-to-date');
+      upstreamBadge?.classList.add('update-available');
+      const logEl = $('#assetLog');
+      log(logEl, `Upstream repo has new commits (${latestShortSha}). Re-run build to update.`, 'ok');
+    } else {
+      if (upstreamText) upstreamText.textContent = `Latest: ${latestShortSha}`;
+      upstreamBadge?.classList.add('up-to-date');
+    }
+  } catch (e) {
+    if (upstreamText) upstreamText.textContent = 'Sync check unavailable';
+    console.warn('Upstream check error:', e);
+  } finally {
+    if (btn) btn.classList.remove('loading');
+  }
+}
+
 // Initial setup
 renderStepList();
 initAssetLists($('#languageSelect')?.value || 'en');
+loadBuildInfo();
 
 $('#languageSelect')?.addEventListener('change', (e) => {
   if (!state.files) {
@@ -286,3 +356,5 @@ $('#btnUpdate')?.addEventListener('click', handleRender);
 
 $('#btnSelectAll')?.addEventListener('click', () => handleToggleAllSteps(true));
 $('#btnDeselectAll')?.addEventListener('click', () => handleToggleAllSteps(false));
+
+$('#btnCheckUpstream')?.addEventListener('click', checkUpstreamUpdates);
